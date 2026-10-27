@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Землетрясение: Спаси Аню</title>
+    <style>
+        :root {
+            --bg-start: #1a1a2e;
+            --bg-end: #16213e;
+            --accent-yellow: #e9c46a;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8f9fa;
+            --text-secondary: #b8b8b8;
+            --success: #28a745;
+            --error: #dc3545;
+            --border-radius: 20px;
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Фиксированный заголовок */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent-yellow);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-yellow);
+            margin: 0;
+        }
+
+        .progress-indicator {
+            display: flex;
+            gap: 10px;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: var(--accent-yellow);
+            transform: scale(1.3);
+            box-shadow: 0 0 10px var(--accent-yellow);
+        }
+
+        /* Контент (с отступом под фиксированный хедер) */
+        .content-wrapper {
+            margin-top: 90px;
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .story-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(233, 196, 106, 0.2);
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .story-text {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            font-weight: 500;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--text-secondary);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-height: 60px;
+        }
+
+        .option-btn:hover:not(.disabled):not(.selected) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-yellow);
+            transform: translateY(-3px);
+        }
+
+        .option-btn.correct {
+            background: rgba(40, 167, 69, 0.3);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .option-btn.wrong {
+            background: rgba(220, 53, 69, 0.3);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .option-btn.selected {
+            pointer-events: none;
+        }
+
+        .option-label {
+            font-weight: 800;
+            color: var(--accent-yellow);
+            min-width: 30px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 500px;
+            border: 1px solid var(--accent-yellow);
+        }
+
+        .modal-text {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: var(--text-primary);
+        }
+
+        .modal-btn {
+            background: var(--accent-yellow);
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Финальный экран */
+        .final-screen {
+            text-align: center;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 40px;
+        }
+
+        .final-screen h2 {
+            font-size: 2.5rem;
+            color: var(--success);
+        }
+
+        .final-screen p {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.3rem; }
+            .story-text { font-size: 1.1rem; }
+            .option-btn { font-size: 1.1rem; padding: 18px; }
+            .modal-text { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Фиксированный хедер -->
+    <div class="header">
+        <h1>Спасательная операция: Камчатка</h1>
+        <div class="progress-indicator">
+            <div class="progress-dot active" data-step="1"></div>
+            <div class="progress-dot" data-step="2"></div>
+            <div class="progress-dot" data-step="3"></div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="content-wrapper">
+        <div class="story-card" id="storyCard">
+            <div class="story-text" id="storyText"></div>
+            <div class="options-container" id="optionsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Финальный экран -->
+    <div class="final-screen" id="finalScreen">
+        <h2>Операция завершена!</h2>
+        <p>Аня на холме. Через 10 минут берег накрыло 15-метровой волной. Аня спасена!</p>
+        <button class="option-btn" id="restartBtn" style="background: var(--accent-yellow); color: #1a1a2e;">Пройти заново</button>
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-text" id="modalText"></div>
+            <button class="modal-btn" id="modalActionBtn"></button>
+        </div>
+    </div>
+
+    <script>
+        /* 
+         * МЕТОДИЧЕСКИЙ КОНТЕКСТ ДЛЯ УЧИТЕЛЯ:
+         * Квест проверяет знание алгоритма действий при землетрясении (Drop, Cover, Hold),
+         * понимание разницы между очагом и эпицентром, а также признаки цунами.
+         * Все тексты и пояснения вынесены в массив steps для легкой правки.
+         */
+
+        const steps = [
+            {
+                id: 1,
+                text: "Аня в классе на Камчатке. Началось землетрясение, с полок падают книги. Что ей делать в первую очередь?",
+                options: [
+                    {label: "А", text: "Спрятаться под парту, закрыть голову руками и отойти от окон.", isCorrect: true, explanation: "Верно. Это правило «Треугольник жизни». Парта защитит от падающих обломков потолка."},
+                    {label: "Б", text: "Бежать к лифту, чтобы спуститься быстрее.", isCorrect: false, explanation: "Ошибка! Лифты отключаются при первых толчках. Вы можете застрять в шахте, которая сложится как гармошка."},
+                    {label: "В", text: "Выпрыгнуть в окно с третьего этажа.", isCorrect: false, explanation: "Ошибка! Прыжок с высоты на асфальт или битое стекло приведет к тяжелым травмам."}
+                ]
+            },
+            {
+                id: 2,
+                text: "Аня выбежала на улицу. Эпицентр был на глубине 10 км под городом. Где сейчас опаснее всего?",
+                options: [
+                    {label: "А", text: "В точке эпицентра — она прямо над очагом, там самые сильные разрушения.", isCorrect: true, explanation: "Верно. Эпицентр — проекция очага на поверхность. Там волны приходят первыми и с максимальной силой."},
+                    {label: "Б", text: "Там, где очаг — он на поверхности, значит, там все рушится.", isCorrect: false, explanation: "Ошибка! Очаг (гипоцентр) находится в глубине земли. На поверхности — эпицентр."},
+                    {label: "В", text: "Опасность везде одинаковая, магнитуда и баллы — одно и то же.", isCorrect: false, explanation: "Ошибка! Магнитуда — энергия в очаге. Баллы — интенсивность разрушений на поверхности."}
+                ]
+            },
+            {
+                id: 3,
+                text: "Аня выбежала к берегу океана. Вода внезапно отступила от берега, обнажив дно. Что ей делать?",
+                options: [
+                    {label: "А", text: "Побежать к лодке и плыть в океан.", isCorrect: false, explanation: "Ошибка! В океане волну не видно, но у берега она обрушится. Лодку перевернет."},
+                    {label: "Б", text: "Остаться на пляже и сфотографировать дно.", isCorrect: false, explanation: "Ошибка! Внезапный отлив — главный предвестник цунами. У вас есть считанные минуты."},
+                    {label: "В", text: "Немедленно бежать вглубь материка на возвышенность.", isCorrect: true, explanation: "Верно! Единственный способ спастись. Нужно набрать высоту 30-40 метров."}
+                ]
+            }
+        ];
+
+        let currentStepIndex = 0;
+        let modalAction = 'next';
+
+        const storyCard = document.getElementById('storyCard');
+        const storyText = document.getElementById('storyText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const progressDots = document.querySelectorAll('.progress-dot');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalText = document.getElementById('modalText');
+        const modalActionBtn = document.getElementById('modalActionBtn');
+        const finalScreen = document.getElementById('finalScreen');
+        const restartBtn = document.getElementById('restartBtn');
+
+        function renderStep() {
+            if (currentStepIndex >= steps.length) {
+                showFinalScreen();
+                return;
+            }
+
+            const step = steps[currentStepIndex];
+            storyText.textContent = step.text;
+            
+            // Обновляем прогресс
+            progressDots.forEach(dot => {
+                const stepNum = parseInt(dot.dataset.step);
+                if (stepNum === step.id) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+
+            optionsContainer.innerHTML = '';
+            
+            step.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `<span class="option-label">${opt.label}</span> ${opt.text}`;
+                btn.onclick = () => handleAnswer(opt);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selectedOption) {
+            const step = steps[currentStepIndex];
+            const buttons = optionsContainer.querySelectorAll('.option-btn');
+
+            // Блокируем интерфейс
+            buttons.forEach(btn => btn.classList.add('disabled'));
+            buttons.forEach(btn => btn.classList.remove('correct', 'wrong'));
+
+            // Находим кнопку для подсветки
+            const selectedBtn = Array.from(buttons).find(btn => btn.querySelector('.option-label').textContent === selectedOption.label);
+            
+            if (selectedOption.isCorrect) {
+                selectedBtn.classList.add('correct');
+                modalText.textContent = selectedOption.explanation;
+                modalAction = 'next';
+                modalActionBtn.textContent = 'Дальше';
+            } else {
+                selectedBtn.classList.add('wrong');
+                modalText.textContent = selectedOption.explanation;
+                modalAction = 'retry';
+                modalActionBtn.textContent = 'Попробовать снова';
+            }
+
+            modalOverlay.style.display = 'flex';
+        }
+
+        function showFinalScreen() {
+            storyCard.style.display = 'none';
+            finalScreen.style.display = 'flex';
+        }
+
+        function resetQuiz() {
+            currentStepIndex = 0;
+            finalScreen.style.display = 'none';
+            storyCard.style.display = 'block';
+            renderStep();
+        }
+
+        // Обработчики
+        modalActionBtn.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+            if (modalAction === 'next') {
+                currentStepIndex++;
+                renderStep();
+            } else if (modalAction === 'retry') {
+                // Просто перерисовываем текущий шаг, сбросив выбор
+                renderStep();
+            }
+        });
+
+        restartBtn.addEventListener('click', resetQuiz);
+
+        // Инициализация
+        renderStep();
+    </script>
+</body>
+</html>
